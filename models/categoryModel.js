@@ -6,7 +6,7 @@ const categorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true, // Ensure category names are unique
+      unique: true,
       trim: true,
     },
     description: {
@@ -15,12 +15,12 @@ const categorySchema = new mongoose.Schema(
     },
     parentCategory: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category", // Reference to another Category
-      default: null, // Allow for top-level categories
+      ref: "Category",
+      default: null,
     },
   },
   {
-    timestamps: true, // Add createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
