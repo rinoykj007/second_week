@@ -1,13 +1,15 @@
 const express = require("express");
 const connectDB = require("./db.js");
-
-// Import route files, not model files
-const userRoutes = require("./routes/userRoutes");
-const productRoutes = require("./routes/productRoutes");
-const categoryRoutes = require("./routes/categoryRoutes");
+const userRoutes = require("./routes/userRoutes.js");
+const productRoutes = require("./routes/productRoutes.js");
+const categoryRoutes = require("./routes/categoryRoutes.js");
 const orderRoutes = require("./routes/orderRoutes.js");
+const cartRoutes = require("./routes/cartRoutes.js");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
+const { JWT_SECRET } = process.env;
+console.log("JWT Secret:", JWT_SECRET);
 
 // Connect to MongoDB
 connectDB();
@@ -20,6 +22,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Start server
 const PORT = 5000;

@@ -1,5 +1,6 @@
 const User = require("../models/userModel.js");
 const bcrypt = require("bcryptjs");
+const generateToken = require("../Utility/generateToken.js");
 
 // Create a new user
 exports.createUser = async (req, res) => {
@@ -14,16 +15,13 @@ exports.createUser = async (req, res) => {
       address,
       contactNumber,
     });
-
     await user.save();
-
     res.status(201).json({ msg: "User created successfully", user });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
   }
 };
-
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
@@ -39,11 +37,7 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
+    if (!user) return res.status(404).json({ msg: "User not found" });
     res.json(user);
   } catch (err) {
     console.error(err.message);
@@ -56,22 +50,17 @@ exports.updateUserById = async (req, res) => {
   const { username, email, password, role, address, contactNumber } = req.body;
 
   try {
-    // Hash new password if provided
     const updateData = { username, email, role, address, contactNumber };
     if (password) {
       const salt = await bcrypt.genSalt(10);
-      updateData.password = await bcrypt.hash(password, salt);
+      // updateData.password = await bcrypt.hash(password, salt);
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
+    if (!user) return res.status(404).json({ msg: "User not found" });
     res.json(user);
   } catch (err) {
     console.error(err.message);
@@ -83,11 +72,7 @@ exports.updateUserById = async (req, res) => {
 exports.deleteUserById = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
+    if (!user) return res.status(404).json({ msg: "User not found" });
     res.json({ msg: "User removed" });
   } catch (err) {
     console.error(err.message);
@@ -95,28 +80,26 @@ exports.deleteUserById = async (req, res) => {
   }
 };
 
-// Sign-up and Login combined in the same module
+// Sign-up and login controllers
+
 exports.signupAndLogin = {
-  // Sign-up controller
   signup: async (req, res) => {
     try {
-      const { username, email, password, phone, address } = req.body;
+      const { username, email, password, address, contactNumber } = req.body;
 
-      // Check if the user already exists
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({ message: "Email already in use" });
       }
 
-      // Create a new user
+      const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+
       const newUser = new User({
         username,
         email,
-        password, // This will be hashed by the pre-save middleware
-        contactDetails: {
-          phone,
-          address,
-        },
+        password: hashedPassword, // Save the hashed password
+        address,
+        contactNumber,
       });
 
       await newUser.save();
@@ -128,26 +111,27 @@ exports.signupAndLogin = {
     }
   },
 
-  // Login controller
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
 
-      // Find the user by email
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
-      // Compare the provided password with the hashed password
-      const isMatch = await user.comparePassword(password);
+      const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
-      // If authentication is successful, you might want to create a session or a JWT token here
-      res.status(200).json({ message: "Login successful", userId: user._id });
+      // Generate JWT token
+      const token = generateToken(user);
+      console.log("Generated Token:", token);
+
+      res.status(200).json({ message: "Login successful", token });
     } catch (error) {
+      console.error("Login error:", error);
       res.status(500).json({ message: "Server error", error });
     }
   },

@@ -5,7 +5,7 @@ exports.createOrder = async (req, res) => {
   try {
     const order = new Order(req.body);
     await order.save();
-    res.status(201).json(order);
+    res.status(201).json({ message: "order created ", order });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -18,7 +18,7 @@ exports.getAllOrders = async (req, res) => {
       .populate("user")
       .populate("items.product")
       .exec();
-    res.status(200).json(orders);
+    res.status(200).json({ message: "All Orders ", orders });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -34,7 +34,7 @@ exports.getOrderById = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
-    res.status(200).json(order);
+    res.status(200).json({ message: "product details", order });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
